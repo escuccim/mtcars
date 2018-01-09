@@ -3,6 +3,7 @@ title: "Analysis of MPG vs Transmission"
 author: "Eric Scuccimarra"
 date: "9 January 2018"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
@@ -20,21 +21,17 @@ The objective is to analyze the data from the 1974 Motor Trend road tests of car
 The data is part of R's datasets library and is loaded as follows:
 ```{r loaddata}
 library(datasets)
-data(mtcars)
-```
-
-Next we will convert some features to factors from numeric values, and remove gears as this only exists for manual cars so may cause bias if included in the model.
-
-```{r factordata}
 mtcars$am <- as.factor(mtcars$am)
 levels(mtcars$am) <- c("Automatic", "Manual")
 mtcars$cyl <- as.factor(mtcars$cyl)
 mtcars$gear <- NULL
 ```
 
+The data was preprocessed by converting transmission type and number of cylinders to factors and removing the number of gears as that only is relevant to manual cars.
+
 ## Exploratory Analysis
 A boxplot of MPG per transmission type:
-```{r boxplot}
+```{r boxplot, fig.height=3}
 boxplot(mtcars$mpg ~ mtcars$am, col=c("salmon","green"), ylab="MPG")
 ```
 
@@ -45,21 +42,16 @@ However almost all of the variables in the data appear to be correlated with MPG
 I will also fit a linear model comparing MPG to transmission:
 ```{r initialmodel}
 fit0 <- lm(mpg ~ am, data = mtcars)
-summary(fit0)
+summary(fit0)$coef
+summary(fit0)$r.squared
 ```
 
-As we already knew, transmission type is correllated with MPG, but only explains 36% of the variability, and given the correlations it would seem we can fit a better model.
+As we already knew, transmission type is correllated with MPG, but only explains 36% of the variability, and given the correlations it would seem we can fit a better model. There were also some concerns about leverage raised by the diagnostic plot of this fit which are in the appendix.
 
-```{r plotinitialfit}
-par(mfrow=c(2,2))
-plot(fit0)
-```
-
-The diagnostic plots of this model also contain several troublesome points, it appears that some data points have very high leverage, and it should be expected that the residuals would be high as this model will only predict two MPG values for all cars.
 
 ## Regression Analysis
 
-I will use the step function in the MASS library which will automate selection of a model using the AIC step-wise algorith.
+I will use the step function in the MASS library which will automate selection of a model using the AIC step-wise algorithm.
 
 ```{r fitmodel,results="hide"}
 library(MASS)
@@ -68,10 +60,9 @@ sfit1 <- step(fit1, direction="both")
 ```
 ```{r stepresults}
 summary(sfit1)
-sfit1$anova
 ```
 
-Step has chosen weight + quarter mile time plus transmission type as the best model, which explains 85% of the variability in MPG. 
+Step has chosen weight + quarter mile time plus transmission type as the best model, which explains 85% of the variability in MPG. The ANOVA output of the step command are in the appendix.
 
 ```{r plotfit}
 par(mfrow=c(2,2))
@@ -87,14 +78,7 @@ mauto <- mean(subset(mtcars, am == "Automatic")$wt)
 
 One notable caveat is that there is a substantial difference in the mean weights between manual and automatic cars. The mean weight of manual cars is `r mmanual` while the mean weight of automatic cars is `r mauto`. This makes it difficult to extrapolate how much of the difference in MPG is due to the transmission and how much is due to the extra weight of automatic autos.
 
-To address this issue I test another model:
-```{r lastmodel}
-fit3 <- lm(mpg ~ wt + qsec, mtcars)
-summary(fit3)
-anova(fit3, sfit1)
-```
-The ANOVA analysis between the models that include and exclude transmission indicates that the model which includes transmission provides a better fit, although the Pr(>F) score is just barely below our 5% threshhold.
-
+This is accounted for in the summary of the model above, where significance of including the transmission type in the model is dangerously close to the 0.05 cutoff, with a Pr(>t) of 0.467. 
 
 ## Conclusion
 
@@ -105,4 +89,17 @@ The feature most correlated to the MPG is the weight of the vehicle, which is al
 I should also stress that this data is from 1974 so may not be relevant to modern automobiles.
 
 
+## Appendix
 
+### Diagnostic plot of fit between MPG and transmission
+
+```{r plotinitialfit}
+par(mfrow=c(2,2))
+plot(fit0)
+```
+
+### ANOVA Results of Step Process
+
+```{r stepanova}
+sfit1$anova
+```
