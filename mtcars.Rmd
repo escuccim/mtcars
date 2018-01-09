@@ -21,6 +21,7 @@ The objective is to analyze the data from the 1974 Motor Trend road tests of car
 The data is part of R's datasets library and is loaded as follows:
 ```{r loaddata}
 library(datasets)
+data(mtcars)
 mtcars$am <- as.factor(mtcars$am)
 levels(mtcars$am) <- c("Automatic", "Manual")
 mtcars$cyl <- as.factor(mtcars$cyl)
@@ -30,28 +31,23 @@ mtcars$gear <- NULL
 The data was preprocessed by converting transmission type and number of cylinders to factors and removing the number of gears as that only is relevant to manual cars.
 
 ## Exploratory Analysis
-A boxplot of MPG per transmission type:
-```{r boxplot, fig.height=3}
-boxplot(mtcars$mpg ~ mtcars$am, col=c("salmon","green"), ylab="MPG")
-```
+The boxplot comparing MPG by transmission type, included in the Appendix, indicates that there is a strong correlation between transmission type and MPG, with manual having not only a higher median, but also having a higher 1st quartile than the 3rd quartile of automatics.
 
-This boxplot indicates that there does appear to be a substantial difference between the ranges for Automatic and Manual transmissions, with manual having not only a higher median, but also having a higher 1st quartile than the 3rd quartile of automatics.
+However almost all of the variables in the data appear to be correlated with MPG, with the most significant correlation existing between MPG and weight, cylinders, displacement and horsepower, in order of descending correlation. The correlation of the variables to MPG is included in the appendix.
 
-However almost all of the variables in the data appear to be correlated with MPG, with the most significant correlation existing between MPG and weight, cylinders, displacement and horsepower, in order of descending correlation.
-
-I will also fit a linear model comparing MPG to transmission:
+To get a baseline I fit a model between mpg and transmission.
 ```{r initialmodel}
 fit0 <- lm(mpg ~ am, data = mtcars)
 summary(fit0)$coef
 summary(fit0)$r.squared
 ```
 
-As we already knew, transmission type is correllated with MPG, but only explains 36% of the variability, and given the correlations it would seem we can fit a better model. There were also some concerns about leverage raised by the diagnostic plot of this fit which are in the appendix.
+The $R^2$ of this model indicates that it explains only 36% of the variability in MPG, which is to be expected given the fact that a two-level factor is being asked to explain a wide range of MPG values. A diagnostic plot of this model is included in the appendix.
 
 
 ## Regression Analysis
 
-I will use the step function in the MASS library which will automate selection of a model using the AIC step-wise algorithm.
+I will use the step function in the MASS library which will automate selection of a model using the AIC step-wise algorithm. The AIC starts with a model comparing all variables and then tests and compares subsets of that model, returning the best fitting model.
 
 ```{r fitmodel,results="hide"}
 library(MASS)
@@ -62,21 +58,20 @@ sfit1 <- step(fit1, direction="both")
 summary(sfit1)
 ```
 
-Step has chosen weight + quarter mile time plus transmission type as the best model, which explains 85% of the variability in MPG. The ANOVA output of the step command are in the appendix.
+Step has chosen weight + quarter mile time plus transmission type as the best model, which explains 85% of the variability in MPG. The ANOVA output of the step command is included in the appendix.
 
-```{r plotfit}
-par(mfrow=c(2,2))
-plot(sfit1)
-```
+The diagnostic plots for this model are included in the appendix but there are a few notable concerns raised by them. 
+- The Q-Q plot deviates from the diagonal, indicating non-normal data. 
+- The Residuals vs Fitted line is skewed.
 
-There are also some concerns with this model, namely the Q-Q plot deviates from the diagonal, indicating some non-normal data, and the residuals vs fitted line appears to be skewed. To verify the selection of this model I attempted to fit some other models which intuitively seemed to make sense and while came close to being as accurate as the model picked by step, they all had higher standard error and lower $R^2$. For the sake of brevity those calculations are not detailed here.
+This raised enough doubts in my mind that I manually tried to fit a few other models to compare. For the sake of brevity those attempts are not included in this document. None of the models fit as well as the model selected by step.
 
 ```{r wtbytransmission}
 mmanual <- mean(subset(mtcars, am == "Manual")$wt)
 mauto <- mean(subset(mtcars, am == "Automatic")$wt)
 ```
 
-One notable caveat is that there is a substantial difference in the mean weights between manual and automatic cars. The mean weight of manual cars is `r mmanual` while the mean weight of automatic cars is `r mauto`. This makes it difficult to extrapolate how much of the difference in MPG is due to the transmission and how much is due to the extra weight of automatic autos.
+One notable caveat is that there is a substantial difference in the mean weights between manual and automatic cars. The mean weight of manual cars is `r mmanual` while the mean weight of automatic cars is `r mauto`. This makes it difficult to judge how much of the difference in MPG is due to the transmission and how much is due to the extra weight of automatic automobiles.
 
 This is accounted for in the summary of the model above, where significance of including the transmission type in the model is dangerously close to the 0.05 cutoff, with a Pr(>t) of 0.467. 
 
@@ -91,6 +86,18 @@ I should also stress that this data is from 1974 so may not be relevant to moder
 
 ## Appendix
 
+### Boxplot of MPG vs Transmission
+```{r boxplot, fig.height=3}
+boxplot(mtcars$mpg ~ mtcars$am, col=c("salmon","green"), ylab="MPG")
+```
+
+### Correlation Matrix for Data
+```{r correlationmatrix}
+data(mtcars)
+mtcars$gear <- NULL
+apply(mtcars, 2, function(col) cor(col, mtcars$mpg)) 
+```
+
 ### Diagnostic plot of fit between MPG and transmission
 
 ```{r plotinitialfit}
@@ -102,4 +109,11 @@ plot(fit0)
 
 ```{r stepanova}
 sfit1$anova
+```
+
+### Diagnostic Plots of Best Model
+
+```{r plotfit}
+par(mfrow=c(2,2))
+plot(sfit1)
 ```
