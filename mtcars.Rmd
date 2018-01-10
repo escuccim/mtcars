@@ -31,9 +31,9 @@ mtcars$gear <- NULL
 The data was preprocessed by converting transmission type and number of cylinders to factors and removing the number of gears as that only is relevant to manual cars.
 
 ## Exploratory Analysis
-The boxplot comparing MPG by transmission type, included in the Appendix, indicates that there is a strong correlation between transmission type and MPG, with manual having not only a higher median, but also having a higher 1st quartile than the 3rd quartile of automatics.
+The boxplot comparing MPG by transmission type, included in the Appendix in Figure 1, indicates that there is a strong correlation between transmission type and MPG, with manual having not only a higher median, but also having a higher 1st quartile than the 3rd quartile of automatics.
 
-However almost all of the variables in the data appear to be correlated with MPG, with the most significant correlation existing between MPG and weight, cylinders, displacement and horsepower, in order of descending correlation. The correlation of the variables to MPG is included in the appendix.
+However almost all of the variables in the data appear to be correlated with MPG, with the most significant correlation existing between MPG and weight, cylinders, displacement and horsepower, in order of descending correlation. The correlation of the variables to MPG is included in the appendix in Figure 2.
 
 To get a baseline I fit a model between mpg and transmission.
 ```{r initialmodel}
@@ -42,7 +42,7 @@ summary(fit0)$coef
 summary(fit0)$r.squared
 ```
 
-The $R^2$ of this model indicates that it explains only 36% of the variability in MPG, which is to be expected given the fact that a two-level factor is being asked to explain a wide range of MPG values. A diagnostic plot of this model is included in the appendix.
+The $R^2$ of this model indicates that it explains only 36% of the variability in MPG, which is to be expected given the fact that a two-level factor is being asked to explain a wide range of MPG values. A diagnostic plot of this model is included in the appendix in Figure 3.
 
 
 ## Regression Analysis
@@ -58,9 +58,9 @@ sfit1 <- step(fit1, direction="both")
 summary(sfit1)
 ```
 
-Step has chosen weight + quarter mile time plus transmission type as the best model, which explains 85% of the variability in MPG. The ANOVA output of the step command is included in the appendix.
+Step has chosen weight + quarter mile time plus transmission type as the best model, which explains 85% of the variability in MPG. The ANOVA output of the step command is included in the appendix in Figure 4.
 
-The diagnostic plots for this model are included in the appendix but there are a few notable concerns raised by them. 
+The diagnostic plots for this model are included in the appendix in Figure 5 but there are a few notable concerns raised by them. 
 - The Q-Q plot deviates from the diagonal, indicating non-normal data. 
 - The Residuals vs Fitted line is skewed.
 
@@ -86,32 +86,32 @@ I should also stress that this data is from 1974 so may not be relevant to moder
 
 ## Appendix
 
-### Boxplot of MPG vs Transmission
+### Figure 1 - Boxplot of MPG vs Transmission
 ```{r boxplot, fig.height=3}
 boxplot(mtcars$mpg ~ mtcars$am, col=c("salmon","green"), ylab="MPG")
 ```
 
-### Correlation Matrix for Data
+### Figure 2 - Correlation Matrix for Data
 ```{r correlationmatrix}
 data(mtcars)
 mtcars$gear <- NULL
 apply(mtcars, 2, function(col) cor(col, mtcars$mpg)) 
 ```
 
-### Diagnostic plot of fit between MPG and transmission
+### Figure 3- Diagnostic plot of fit between MPG and transmission
 
 ```{r plotinitialfit}
 par(mfrow=c(2,2))
 plot(fit0)
 ```
 
-### ANOVA Results of Step Process
+### Figure 4 - ANOVA Results of Step Process
 
 ```{r stepanova}
 sfit1$anova
 ```
 
-### Diagnostic Plots of Best Model
+### Figure 5 - Diagnostic Plots of Best Model
 
 ```{r plotfit}
 par(mfrow=c(2,2))
